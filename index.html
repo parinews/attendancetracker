@@ -232,7 +232,7 @@
         }
 
         .selector-box {
-            background: #f5faff;
+            background: white;
             padding: 24px;
             border-radius: 8px;
             max-width: 300px;
@@ -268,6 +268,36 @@
         .selector-btn.active {
             background: #b8d9f0;
             border-color: #5a9bd4;
+        }
+
+        .selector-btn.employee-off-btn {
+            background: #e8d8f0;
+            border-color: #b8a8c8;
+        }
+
+        .selector-btn.employee-off-btn:hover {
+            background: #d8c8e0;
+        }
+
+        .selector-btn.employee-off-btn.active {
+            background: #e8d8f0;
+            border-color: #b8a8c8;
+            border-width: 2px;
+        }
+
+        .selector-btn.employer-given-off-btn {
+            background: #a8c8d8;
+            border-color: #6a8ba3;
+        }
+
+        .selector-btn.employer-given-off-btn:hover {
+            background: #98b8c8;
+        }
+
+        .selector-btn.employer-given-off-btn.active {
+            background: #a8c8d8;
+            border-color: #6a8ba3;
+            border-width: 2px;
         }
 
         .selector-btn.remove {
@@ -667,6 +697,7 @@
             state.selectedEmployee = employeeName;
             document.getElementById('summaryView').style.display = 'none';
             document.getElementById('detailView').style.display = 'block';
+            document.querySelector('.admin-section').style.display = 'none';
             renderDetail();
         }
 
@@ -742,13 +773,13 @@
             options.innerHTML = '';
             
             const employeeOffBtn = document.createElement('button');
-            employeeOffBtn.className = 'selector-btn' + (currentType === DAY_TYPES.EMPLOYEE_OFF ? ' active' : '');
+            employeeOffBtn.className = 'selector-btn employee-off-btn' + (currentType === DAY_TYPES.EMPLOYEE_OFF ? ' active' : '');
             employeeOffBtn.textContent = 'Employee Off';
             employeeOffBtn.onclick = () => setDayType(DAY_TYPES.EMPLOYEE_OFF);
             options.appendChild(employeeOffBtn);
             
             const employerOffBtn = document.createElement('button');
-            employerOffBtn.className = 'selector-btn' + (currentType === DAY_TYPES.EMPLOYER_GIVEN_OFF ? ' active' : '');
+            employerOffBtn.className = 'selector-btn employer-given-off-btn' + (currentType === DAY_TYPES.EMPLOYER_GIVEN_OFF ? ' active' : '');
             employerOffBtn.textContent = 'Employer Given Off';
             employerOffBtn.onclick = () => setDayType(DAY_TYPES.EMPLOYER_GIVEN_OFF);
             options.appendChild(employerOffBtn);
@@ -805,6 +836,7 @@
         document.getElementById('backBtn').onclick = () => {
             document.getElementById('detailView').style.display = 'none';
             document.getElementById('summaryView').style.display = 'block';
+            document.querySelector('.admin-section').style.display = 'block';
             state.selectedEmployee = null;
             renderSummary();
         };
