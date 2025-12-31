@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: white;
+            padding: 16px;
+            line-height: 1.5;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: #f0f8ff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(100, 150, 200, 0.15);
+        }
+
+        h1 {
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .admin-section {
+            background: white;
+            padding: 0;
+            border-radius: 8px;
+            margin: 0;
+            border: 1px solid white;
+            box-shadow: none;
+            text-align: left;
+        }
+
+        .admin-section h2 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .clear-btn {
+            padding: 8px 16px;
+            border: 1px solid #dc3545;
+            background: #ffe6e6;
+            color: #dc3545;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .clear-btn:hover {
+            background: #ffd6d6;
+        }
+
+        .month-nav {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .month-nav button {
+            padding: 8px 16px;
+            border: 1px solid #b8d4e8;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .month-nav button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .month-nav button:not(:disabled):hover {
+            background: #f5f5f5;
+        }
+
+        .current-month {
+            font-weight: 600;
+            flex: 1;
+            text-align: center;
+        }
+
+        .employee-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(100, 150, 200, 0.15);
+            cursor: pointer;
+            border: 1px solid rgba(150, 200, 255, 0.2);
+        }
+
+        .employee-card:hover {
+            box-shadow: 0 4px 12px rgba(100, 150, 200, 0.25);
+            background: #f5f5f5;
+            transform: translateY(-1px);
+            transition: all 0.2s ease;
+        }
+
+        .employee-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .employee-stats {
+            display: flex;
+            gap: 24px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat-item span {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .calendar {
+            background: #f0f8ff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(100, 150, 200, 0.15);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .back-btn {
+            padding: 8px 16px;
+            border: 1px solid #b8d4e8;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .back-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .day-header {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            padding: 8px 4px;
+        }
+
+        .day-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #c8d8e8;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            background: white;
+        }
+
+        .day-cell.empty {
+            cursor: default;
+            border-color: transparent;
+            background: transparent;
+        }
+
+        .day-cell:not(.empty):hover {
+            background: #f5f5f5;
+        }
+
+        .day-cell.today {
+            border-color: #5a9bd4;
+            border-width: 2px;
+            background: white;
+        }
+
+        .day-cell.employee-off {
+            background: #e8d8f0;
+            border-color: #b8a8c8;
+        }
+
+        .day-cell.employer-given-off {
+            background: #a8c8d8;
+            border-color: #6a8ba3;
+        }
+
+        .selector-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .selector-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .selector-box {
+            background: #f5faff;
+            padding: 24px;
+            border-radius: 8px;
+            max-width: 300px;
+            width: 90%;
+            box-shadow: 0 4px 16px rgba(100, 150, 200, 0.3);
+        }
+
+        .selector-box h3 {
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        .selector-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .selector-btn {
+            padding: 12px;
+            border: 1px solid #b8d4e8;
+            background: #e6f3ff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .selector-btn:hover {
+            background: #d6e9f5;
+        }
+
+        .selector-btn.active {
+            background: #b8d9f0;
+            border-color: #5a9bd4;
+        }
+
+        .selector-btn.remove {
+            color: #dc3545;
+        }
+
+        .selector-btn.remove:hover {
+            background: #f8d7da;
+        }
+
+        .error-msg {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            font-size: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-box {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 2px;
+        }
+
+        .legend-box.employee-off {
+            background: #e8d8f0;
+        }
+
+        .legend-box.employer-given-off {
+            background: #a8c8d8;
+        }
+
+        .yearly-summary {
+            background: #d0e0e8;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(100, 150, 200, 0.15);
+            border: 1px solid rgba(150, 200, 255, 0.2);
+        }
+
+        .yearly-summary h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .yearly-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .yearly-stat-card {
+            background: #e6f3ff;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #5a9bd4;
+        }
+
+        .yearly-stat-card h3 {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .yearly-stat-card .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .yearly-employee-list {
+            margin-top: 16px;
+        }
+
+        .yearly-employee-list h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #666;
+        }
+
+        .yearly-employee-row {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 14px;
+        }
+
+        .yearly-employee-row:last-child {
+            border-bottom: none;
+        }
+
+        .yearly-employee-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .yearly-employee-stat {
+            color: #666;
+            text-align: right;
+        }
+
+        .yearly-employee-stat span {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .title-section {
+            background: #d0e0f0;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(100, 150, 200, 0.15);
+            text-align: left;
+            border: 1px solid rgba(150, 200, 255, 0.3);
+        }
+
+        .title-section h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            margin: 0;
+        }
+
+        .monthly-summary-section {
+            background: #e8f4f8;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(100, 150, 200, 0.15);
+            border: 1px solid rgba(150, 200, 255, 0.2);
+        }
+
+        .monthly-summary-section header {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 16px;
+            box-shadow: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title-section">
+            <h1>Attendance Tracker</h1>
+        </div>
+        <div id="summaryView">
+            <div class="yearly-summary" id="yearlySummary"></div>
+            <div class="monthly-summary-section">
+                <header>
+                    <div class="month-nav">
+                        <button id="prevMonth">← Prev</button>
+                        <div class="current-month" id="currentMonthLabel"></div>
+                        <button id="nextMonth" disabled>Next →</button>
+                    </div>
+                </header>
+                <div id="employeeList"></div>
+            </div>
+        </div>
+
+        <div id="detailView" style="display: none;">
+            <div class="calendar">
+                <div class="calendar-header">
+                    <button class="back-btn" id="backBtn">← Back</button>
+                    <h2 id="detailEmployeeName"></h2>
+                </div>
+                <div class="employee-stats" id="detailStats"></div>
+                <div style="margin-top: 16px;">
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-box employee-off"></div>
+                            <span>Employee Off</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-box employer-given-off"></div>
+                            <span>Employer Given Off</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="admin-section">
+            <button class="clear-btn" id="clearDataBtn">Clear All Data</button>
+        </div>
+    </div>
+
+    <div class="selector-overlay" id="selectorOverlay">
+        <div class="selector-box">
+            <h3 id="selectorDate"></h3>
+            <div class="selector-options" id="selectorOptions"></div>
+            <div class="error-msg" id="errorMsg"></div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'attendance_data';
+        const DAY_TYPES = {
+            EMPLOYEE_OFF: 'EMPLOYEE_OFF',
+            EMPLOYER_GIVEN_OFF: 'EMPLOYER_GIVEN_OFF'
+        };
+
+        let state = {
+            employees: [],
+            attendance: {},
+            currentMonth: new Date(),
+            selectedEmployee: null,
+            selectedDate: null
+        };
+
+        function loadData() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            if (stored) {
+                const data = JSON.parse(stored);
+                state.employees = data.employees;
+                state.attendance = data.attendance;
+            } else {
+                state.employees = [
+                    { name: 'Sarita', status: 'active' },
+                    { name: 'Puja', status: 'active' },
+                    { name: 'Jayshree', status: 'active' }
+                ];
+                state.attendance = {};
+                saveData();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                employees: state.employees,
+                attendance: state.attendance
+            }));
+        }
+
+        function getDateKey(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function getAttendanceKey(employeeName, date) {
+            return `${employeeName}|${getDateKey(date)}`;
+        }
+
+        function isEmployeeActiveInMonth(employee, month) {
+            if (employee.status === 'active') return true;
+            
+            const today = new Date();
+            const monthYear = `${month.getFullYear()}-${month.getMonth()}`;
+            const todayYear = `${today.getFullYear()}-${today.getMonth()}`;
+            
+            return monthYear < todayYear;
+        }
+
+        function calculateBalance(employeeName, upToDate) {
+            let balance = 0;
+            const now = new Date(upToDate);
+            const currentYear = now.getFullYear();
+            
+            for (let year = 2024; year <= currentYear; year++) {
+                const endMonth = (year === currentYear) ? now.getMonth() : 11;
+                
+                for (let month = 0; month <= endMonth; month++) {
+                    balance += 2;
+                    
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    const endDay = (year === currentYear && month === now.getMonth()) ? now.getDate() : daysInMonth;
+                    
+                    for (let day = 1; day <= endDay; day++) {
+                        const date = new Date(year, month, day);
+                        const key = getAttendanceKey(employeeName, date);
+                        if (state.attendance[key] === DAY_TYPES.EMPLOYEE_OFF) {
+                            balance--;
+                        }
+                    }
+                }
+            }
+            
+            return balance;
+        }
+
+        function getMonthStats(employeeName, month) {
+            const year = month.getFullYear();
+            const monthIndex = month.getMonth();
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+            
+            let employeeOff = 0;
+            let employerGivenOff = 0;
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, monthIndex, day);
+                const key = getAttendanceKey(employeeName, date);
+                const dayType = state.attendance[key];
+                
+                if (dayType === DAY_TYPES.EMPLOYEE_OFF) employeeOff++;
+                if (dayType === DAY_TYPES.EMPLOYER_GIVEN_OFF) employerGivenOff++;
+            }
+            
+            return { employeeOff, employerGivenOff };
+        }
+
+        function getYearStats(employeeName, year) {
+            let employeeOff = 0;
+            let employerGivenOff = 0;
+            
+            for (let month = 0; month < 12; month++) {
+                const monthDate = new Date(year, month, 1);
+                const stats = getMonthStats(employeeName, monthDate);
+                employeeOff += stats.employeeOff;
+                employerGivenOff += stats.employerGivenOff;
+            }
+            
+            return { employeeOff, employerGivenOff };
+        }
+
+        function renderYearlySummary() {
+            const currentYear = new Date().getFullYear();
+            const yearLabel = currentYear;
+            
+            const employeeYearStats = [];
+            
+            state.employees
+                .filter(emp => emp.status === 'active')
+                .forEach(employee => {
+                    const stats = getYearStats(employee.name, currentYear);
+                    employeeYearStats.push({
+                        name: employee.name,
+                        ...stats
+                    });
+                });
+            
+            const yearlySummaryEl = document.getElementById('yearlySummary');
+            yearlySummaryEl.innerHTML = `
+                <h2>${yearLabel} Days Off</h2>
+                <div class="yearly-employee-list">
+                    ${employeeYearStats.map(emp => `
+                        <div class="yearly-employee-row">
+                            <div class="yearly-employee-name">${emp.name}</div>
+                            <div class="yearly-employee-stat">Employee: <span>${emp.employeeOff}</span></div>
+                            <div class="yearly-employee-stat">Employer: <span>${emp.employerGivenOff}</span></div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderSummary() {
+            renderYearlySummary();
+            
+            const month = state.currentMonth;
+            const monthLabel = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            document.getElementById('currentMonthLabel').textContent = monthLabel;
+            
+            const today = new Date();
+            const isCurrentMonth = month.getMonth() === today.getMonth() && month.getFullYear() === today.getFullYear();
+            document.getElementById('nextMonth').disabled = isCurrentMonth;
+            
+            const employeeList = document.getElementById('employeeList');
+            employeeList.innerHTML = '';
+            
+            state.employees
+                .filter(emp => isEmployeeActiveInMonth(emp, month))
+                .forEach(employee => {
+                    const stats = getMonthStats(employee.name, month);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'employee-card';
+                    card.innerHTML = `
+                        <div class="employee-name">${employee.name}</div>
+                        <div class="employee-stats">
+                            <div class="stat-item">Employee Off: <span>${stats.employeeOff}</span></div>
+                            <div class="stat-item">Employer Given Off: <span>${stats.employerGivenOff}</span></div>
+                        </div>
+                    `;
+                    card.onclick = () => showDetail(employee.name);
+                    employeeList.appendChild(card);
+                });
+        }
+
+        function showDetail(employeeName) {
+            state.selectedEmployee = employeeName;
+            document.getElementById('summaryView').style.display = 'none';
+            document.getElementById('detailView').style.display = 'block';
+            renderDetail();
+        }
+
+        function renderDetail() {
+            const employee = state.employees.find(e => e.name === state.selectedEmployee);
+            const month = state.currentMonth;
+            
+            document.getElementById('detailEmployeeName').textContent = employee.name;
+            
+            const stats = getMonthStats(employee.name, month);
+            document.getElementById('detailStats').innerHTML = `
+                <div class="stat-item">Employee Off: <span>${stats.employeeOff}</span></div>
+                <div class="stat-item">Employer Given Off: <span>${stats.employerGivenOff}</span></div>
+            `;
+            
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            
+            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+            
+            const year = month.getFullYear();
+            const monthIndex = month.getMonth();
+            const firstDay = new Date(year, monthIndex, 1).getDay();
+            const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+            
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'day-cell empty';
+                grid.appendChild(empty);
+            }
+            
+            const today = new Date();
+            const todayKey = getDateKey(today);
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, monthIndex, day);
+                const dateKey = getDateKey(date);
+                const key = getAttendanceKey(employee.name, date);
+                const dayType = state.attendance[key];
+                
+                const cell = document.createElement('div');
+                cell.className = 'day-cell';
+                if (dateKey === todayKey) cell.classList.add('today');
+                if (dayType === DAY_TYPES.EMPLOYEE_OFF) cell.classList.add('employee-off');
+                if (dayType === DAY_TYPES.EMPLOYER_GIVEN_OFF) cell.classList.add('employer-given-off');
+                cell.textContent = day;
+                
+                const currentYear = new Date().getFullYear();
+                if (date.getFullYear() === currentYear) {
+                    cell.onclick = () => showSelector(date);
+                }
+                
+                grid.appendChild(cell);
+            }
+        }
+
+        function showSelector(date) {
+            state.selectedDate = date;
+            const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('selectorDate').textContent = dateStr;
+            document.getElementById('errorMsg').textContent = '';
+            
+            const key = getAttendanceKey(state.selectedEmployee, date);
+            const currentType = state.attendance[key];
+            
+            const options = document.getElementById('selectorOptions');
+            options.innerHTML = '';
+            
+            const employeeOffBtn = document.createElement('button');
+            employeeOffBtn.className = 'selector-btn' + (currentType === DAY_TYPES.EMPLOYEE_OFF ? ' active' : '');
+            employeeOffBtn.textContent = 'Employee Off';
+            employeeOffBtn.onclick = () => setDayType(DAY_TYPES.EMPLOYEE_OFF);
+            options.appendChild(employeeOffBtn);
+            
+            const employerOffBtn = document.createElement('button');
+            employerOffBtn.className = 'selector-btn' + (currentType === DAY_TYPES.EMPLOYER_GIVEN_OFF ? ' active' : '');
+            employerOffBtn.textContent = 'Employer Given Off';
+            employerOffBtn.onclick = () => setDayType(DAY_TYPES.EMPLOYER_GIVEN_OFF);
+            options.appendChild(employerOffBtn);
+            
+            if (currentType) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'selector-btn remove';
+                removeBtn.textContent = 'Remove';
+                removeBtn.onclick = () => setDayType(null);
+                options.appendChild(removeBtn);
+            }
+            
+            document.getElementById('selectorOverlay').classList.add('active');
+        }
+
+        function setDayType(dayType) {
+            const key = getAttendanceKey(state.selectedEmployee, state.selectedDate);
+            const currentType = state.attendance[key];
+            
+            if (dayType === DAY_TYPES.EMPLOYEE_OFF) {
+                const balance = calculateBalance(state.selectedEmployee, state.selectedDate);
+                if (currentType !== DAY_TYPES.EMPLOYEE_OFF && balance <= 0) {
+                    document.getElementById('errorMsg').textContent = 'Insufficient balance';
+                    return;
+                }
+            }
+            
+            if (dayType) {
+                state.attendance[key] = dayType;
+            } else {
+                delete state.attendance[key];
+            }
+            
+            saveData();
+            hideSelector();
+            renderDetail();
+            renderYearlySummary();
+        }
+
+        function hideSelector() {
+            document.getElementById('selectorOverlay').classList.remove('active');
+        }
+
+        document.getElementById('prevMonth').onclick = () => {
+            state.currentMonth = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth() - 1);
+            renderSummary();
+        };
+
+        document.getElementById('nextMonth').onclick = () => {
+            state.currentMonth = new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth() + 1);
+            renderSummary();
+        };
+
+        document.getElementById('backBtn').onclick = () => {
+            document.getElementById('detailView').style.display = 'none';
+            document.getElementById('summaryView').style.display = 'block';
+            state.selectedEmployee = null;
+            renderSummary();
+        };
+
+        document.getElementById('selectorOverlay').onclick = (e) => {
+            if (e.target.id === 'selectorOverlay') {
+                hideSelector();
+            }
+        };
+
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This will reset all employees and attendance records.')) {
+                localStorage.removeItem(STORAGE_KEY);
+                state.employees = [
+                    { name: 'Sarita', status: 'active' },
+                    { name: 'Puja', status: 'active' },
+                    { name: 'Jayshree', status: 'active' }
+                ];
+                state.attendance = {};
+                saveData();
+                renderYearlySummary();
+                renderSummary();
+                alert('All data cleared! The app has been reset with the default employees.');
+            }
+        }
+
+        document.getElementById('clearDataBtn').onclick = clearAllData;
+
+        loadData();
+        renderSummary();
+    </script>
+</body>
+</html>
